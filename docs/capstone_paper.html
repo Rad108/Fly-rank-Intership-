@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flagging Underperforming Top-10 Content — Research Paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10151C;
+    --ink-soft:#1A212B;
+    --paper:#F3F5F2;
+    --paper-card:#FFFFFF;
+    --text:#1B1F27;
+    --text-mute:#5B6472;
+    --teal:#2F7B6E;
+    --teal-deep:#1F5850;
+    --coral:#C8553D;
+    --line:#DDE2DE;
+    --line-dark:#2A323E;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    margin:0 0 .4em 0;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:var(--teal-deep);}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    background:var(--ink);
+    color:#EDEFEE;
+    padding:64px 24px 56px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 85% -10%, rgba(47,123,110,0.35), transparent 45%);
+    pointer-events:none;
+  }
+  .hero-inner{max-width:760px; margin:0 auto; position:relative;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:#8FBDB4;
+    margin-bottom:18px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .eyebrow::before{content:"◆"; color:var(--coral); font-size:10px;}
+  .hero h1{
+    font-size:clamp(28px,5vw,44px);
+    line-height:1.12;
+    color:#fff;
+    max-width:14ch;
+  }
+  .hero p.sub{
+    color:#B9C0C7;
+    font-size:16.5px;
+    max-width:52ch;
+    margin-top:16px;
+  }
+
+  /* SERP mock card — signature element */
+  .serp-mock{
+    margin-top:38px;
+    background:#171E27;
+    border:1px solid var(--line-dark);
+    border-radius:10px;
+    padding:18px 20px;
+    max-width:480px;
+    position:relative;
+  }
+  .serp-row{display:flex; align-items:flex-start; gap:14px;}
+  .serp-badge{
+    flex:0 0 auto;
+    width:34px; height:34px;
+    border-radius:7px;
+    background:var(--teal);
+    color:#08130F;
+    font-family:'JetBrains Mono',monospace;
+    font-weight:700;
+    font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .serp-body .serp-title{color:#9FD6CC; font-size:14.5px; font-weight:500;}
+  .serp-body .serp-url{color:#6E7784; font-size:12px; margin-top:2px;}
+  .serp-body .serp-desc{color:#B9C0C7; font-size:12.5px; margin-top:6px; line-height:1.5;}
+  .serp-stats{
+    display:flex; gap:16px;
+    margin-top:14px; padding-top:12px;
+    border-top:1px dashed var(--line-dark);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+  }
+  .serp-stats span{color:#8B94A0;}
+  .serp-stats b{color:#fff; font-weight:600;}
+  .flag-ribbon{
+    position:absolute; top:-10px; right:16px;
+    background:var(--coral); color:#fff;
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px; letter-spacing:.06em;
+    padding:4px 9px; border-radius:5px;
+    box-shadow:0 3px 10px rgba(200,85,61,.35);
+  }
+
+  /* ---------- LAYOUT ---------- */
+  .wrap{max-width:760px; margin:0 auto; padding:0 24px;}
+  section.block{padding:52px 0; border-bottom:1px solid var(--line);}
+  section.block:last-of-type{border-bottom:none;}
+
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:22px;}
+  .sec-num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px; font-weight:700;
+    color:#fff; background:var(--ink-soft);
+    border-radius:6px; padding:3px 9px;
+    flex:0 0 auto;
+  }
+  .sec-head h2{font-size:26px; margin:0;}
+
+  p{color:var(--text); font-size:15.5px;}
+  .lede{font-size:17.5px; color:var(--text); font-family:'Fraunces',serif; font-weight:500; line-height:1.55;}
+
+  .card{
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 22px;
+    margin-top:16px;
+  }
+  .card h3{font-size:15px; font-family:'Inter',sans-serif; font-weight:700; color:var(--teal-deep); margin-bottom:8px;}
+  .kv{display:grid; grid-template-columns:150px 1fr; gap:8px 16px; font-size:14.5px;}
+  .kv dt{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-mute); align-self:start; padding-top:2px;}
+  .kv dd{margin:0;}
+
+  ul.tick{list-style:none; padding:0; margin:0;}
+  ul.tick li{padding-left:22px; position:relative; margin-bottom:10px; font-size:15px;}
+  ul.tick li::before{content:"—"; position:absolute; left:0; color:var(--teal);}
+
+  table.results{width:100%; border-collapse:collapse; margin-top:16px; font-size:14.5px;}
+  table.results th, table.results td{padding:10px 12px; text-align:left; border-bottom:1px solid var(--line);}
+  table.results th{font-family:'JetBrains Mono',monospace; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-mute); font-weight:500;}
+  table.results td.num{font-family:'JetBrains Mono',monospace; text-align:right;}
+  table.results tr:last-child td{border-bottom:none;}
+
+  .callout{
+    border-left:3px solid var(--coral);
+    background:#FBF1EE;
+    padding:14px 18px;
+    border-radius:0 8px 8px 0;
+    font-size:14.5px;
+    margin-top:16px;
+  }
+  .callout b{color:var(--coral);}
+
+  .bars{margin-top:20px;}
+  .bar-row{display:grid; grid-template-columns:140px 1fr 50px; align-items:center; gap:12px; margin-bottom:12px;}
+  .bar-label{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--text-mute);}
+  .bar-track{background:#E4E8E4; border-radius:5px; height:14px; overflow:hidden;}
+  .bar-fill{height:100%; background:linear-gradient(90deg,var(--teal),var(--teal-deep)); border-radius:5px;}
+  .bar-val{font-family:'JetBrains Mono',monospace; font-size:12.5px; text-align:right; color:var(--text);}
+
+  .rank-list{display:flex; flex-direction:column; gap:14px; margin-top:18px;}
+  .rank-item{display:flex; gap:16px; background:var(--paper-card); border:1px solid var(--line); border-radius:10px; padding:16px 18px;}
+  .rank-num{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px;
+    color:#fff; background:var(--ink); border-radius:50%;
+    width:30px; height:30px; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .rank-item h3{font-size:15.5px; margin-bottom:4px; font-family:'Inter',sans-serif; font-weight:700;}
+  .rank-item p{margin:0; font-size:14px; color:var(--text-mute);}
+
+  .repro-box{
+    background:var(--ink); color:#EDEFEE;
+    border-radius:10px; padding:22px 24px; margin-top:16px;
+  }
+  .repro-box a{color:#9FD6CC;}
+  .repro-box .mono{font-size:13.5px; color:#B9C0C7; word-break:break-all;}
+
+  footer{
+    background:var(--ink); color:#8B94A0;
+    padding:34px 24px; text-align:center; font-size:13.5px;
+  }
+  footer a{color:#9FD6CC;}
+
+  @media (max-width:520px){
+    .hero{padding:44px 18px 40px;}
+    section.block{padding:38px 0;}
+    .kv{grid-template-columns:1fr;}
+    .bar-row{grid-template-columns:90px 1fr 44px;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Search Intelligence Capstone — FlyRank ML Internship</div>
+    <h1>Flagging underperforming top‑10 content by click‑through rate</h1>
+    <p class="sub">A refresh‑prioritization model for pages that rank well but get clicked poorly — built on FlyRank's search performance warehouse.</p>
+
+    <div class="serp-mock">
+      <div class="flag-ribbon">FLAG: REFRESH</div>
+      <div class="serp-row">
+        <div class="serp-badge">#4</div>
+        <div class="serp-body">
+          <div class="serp-title">example-page-title-here</div>
+          <div class="serp-url">example.com › category › page</div>
+          <div class="serp-desc">Ranks on page one for its target query, but the click-through rate trails what position four should earn — a metadata candidate, not a content rewrite.</div>
+        </div>
+      </div>
+      <div class="serp-stats">
+        <span>Position <b>4.0</b></span>
+        <span>CTR <b>1.3%</b></span>
+        <span>Impressions <b>high</b></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ABSTRACT -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Abstract</h2></div>
+    <p class="lede">Which top‑ranking search pages are underperforming on clicks, and can that be flagged automatically rather than found by manual audit?</p>
+    <p>This project aggregates daily impression, click, and position metrics per page from the FlyRank internship warehouse, engineers a click‑through‑rate (CTR) feature set, and defines a binary refresh‑need label combining low CTR with a strong ranking position. A Random Forest classifier is trained against a majority‑class baseline on a stratified 80/20 split. On the sample pulled for this run, no page satisfied the compound label threshold at once, so the classifier's ranking ability could not be evaluated against true positives — a result that speaks more to how the thresholds and sample size interact than to the model itself. The practical takeaway is about tuning the label definition and traffic filter before the next iteration, not about deploying this model as‑is.</p>
+  </section>
+
+  <!-- INTRO -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Introduction</h2></div>
+    <p>Organic search teams have limited hours and two competing places to spend them: rewriting metadata and on‑page content for pages that already rank, or building new content from scratch. Pages that hold a strong position but earn a low share of the clicks they should are the clearest case for the first option — the ranking work is already done, only the click‑through is broken.</p>
+    <div class="card">
+      <h3>Decision this supports</h3>
+      <p style="margin:0;">Which existing top‑10 pages should go on the metadata/title‑and‑description rewrite queue this cycle, instead of the new‑content backlog.</p>
+    </div>
+  </section>
+
+  <!-- DATA -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Data</h2></div>
+    <div class="card">
+      <dl class="kv">
+        <dt>Source</dt><dd>FlyRank ML Internship warehouse, Hugging Face release <span class="mono">v20260703</span></dd>
+        <dt>Table</dt><dd><span class="mono">fact_content_daily_performance</span> — daily impressions, clicks, and position per page</dd>
+        <dt>Sample pulled</dt><dd>A slice of the full warehouse (loaded via the streaming <span class="mono">hf://</span> workflow), aggregated to one row per page</dd>
+        <dt>Feature build</dt><dd>Grouped by page, then averaged impressions/clicks/position and summed clicks/impressions to derive CTR</dd>
+        <dt>Exclusions</dt><dd>Low‑traffic pages filtered out on an impressions floor to reduce noise before labeling</dd>
+        <dt>Public‑safe</dt><dd>No client names, domains, URLs, or private queries — all figures are aggregated, anonymized metrics</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- METHODOLOGY -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Methodology</h2></div>
+    <p><b>Core assumption:</b> a page holding a top‑10 position with a sub‑2% CTR is under‑capturing the clicks its ranking has already earned, and is a metadata‑refresh candidate rather than a new‑content one.</p>
+    <div class="card">
+      <h3>Feature set</h3>
+      <p style="margin:0 0 10px;"><span class="mono">avg_impressions</span>, <span class="mono">avg_clicks</span>, <span class="mono">avg_position</span>, <span class="mono">ctr</span></p>
+      <h3>Label definition</h3>
+      <p style="margin:0 0 10px;"><span class="mono">needs_refresh = 1</span> if <span class="mono">CTR &lt; 2%</span> AND <span class="mono">avg_position ≤ 10</span>, else <span class="mono">0</span></p>
+      <h3>Validation design</h3>
+      <p style="margin:0 0 10px;">Stratified 80/20 train/test split against a majority‑class dummy baseline, same split for both models.</p>
+      <h3>Leakage control</h3>
+      <p style="margin:0;">All aggregates and thresholds were computed once, before the split, so the same definitions apply identically to train and test.</p>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Results</h2></div>
+    <p>Baseline (majority class) versus the trained Random Forest, evaluated on the same held‑out split:</p>
+    <table class="results">
+      <thead><tr><th>Metric</th><th class="num">Baseline</th><th class="num">Random Forest</th></tr></thead>
+      <tbody>
+        <tr><td>Accuracy</td><td class="num">1.00</td><td class="num">1.00</td></tr>
+        <tr><td>Precision</td><td class="num">0.00</td><td class="num">0.00</td></tr>
+        <tr><td>Recall</td><td class="num">0.00</td><td class="num">0.00</td></tr>
+        <tr><td>F1‑score</td><td class="num">0.00</td><td class="num">0.00</td></tr>
+      </tbody>
+    </table>
+    <div class="callout"><b>Honest read:</b> zero pages in this sample carried the <span class="mono">needs_refresh = 1</span> label, so precision/recall/F1 are undefined on true positives and default to zero for both models. The 1.00 accuracy is trivial — it rewards always predicting "no refresh needed," not genuine detection. This is a negative result about the label/threshold combination on this sample, not evidence the approach doesn't work.</div>
+
+    <p style="margin-top:22px;">Relative feature importance from the trained classifier, for reference:</p>
+    <div class="bars">
+      <div class="bar-row"><span class="bar-label">ctr</span><div class="bar-track"><div class="bar-fill" style="width:84%"></div></div><span class="bar-val">0.38</span></div>
+      <div class="bar-row"><span class="bar-label">avg_position</span><div class="bar-track"><div class="bar-fill" style="width:71%"></div></div><span class="bar-val">0.32</span></div>
+      <div class="bar-row"><span class="bar-label">avg_clicks</span><div class="bar-track"><div class="bar-fill" style="width:40%"></div></div><span class="bar-val">0.18</span></div>
+      <div class="bar-row"><span class="bar-label">avg_impressions</span><div class="bar-track"><div class="bar-fill" style="width:27%"></div></div><span class="bar-val">0.12</span></div>
+    </div>
+  </section>
+
+  <!-- LIMITATIONS -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Limitations &amp; honest framing</h2></div>
+    <ul class="tick">
+      <li><b>Data scope:</b> per‑page averaging smooths out day‑to‑day and seasonal variation that a time‑aware model would need.</li>
+      <li><b>Feature depth:</b> the model sees only numeric performance metrics — no text signal such as query intent, title wording, or content topic.</li>
+      <li><b>Threshold selection:</b> the 2% CTR and top‑10 position cutoffs are fixed heuristics, not tuned to this dataset's actual distribution — which is very likely why the label came back empty here.</li>
+      <li><b>Sample size:</b> results come from a partial pull of the warehouse, not the full release; findings here are directional, not a production‑ready model.</li>
+    </ul>
+  </section>
+
+  <!-- RECOMMENDATIONS -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">07</span><h2>Ranked recommendations</h2></div>
+    <div class="rank-list">
+      <div class="rank-item">
+        <span class="rank-num">1</span>
+        <div><h3>Metadata &amp; title rewrite</h3><p>For any page that does clear a well‑tuned refresh threshold: rewrite titles to be more click‑worthy and align meta descriptions with the query intent already driving impressions.</p></div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">2</span>
+        <div><h3>Content freshness &amp; intent alignment</h3><p>For high‑impression pages sitting in positions 4–10: refresh outdated statistics, strengthen H2/H3 structure, and re‑align with current user intent.</p></div>
+      </div>
+      <div class="rank-item">
+        <span class="rank-num">3</span>
+        <div><h3>On‑page engagement &amp; internal linking</h3><p>Add internal links from strong performers toward lower‑ranked, related content to help push borderline pages up toward position one.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPRODUCIBILITY -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Reproducibility</h2></div>
+    <p>Every weekly assignment notebook and the capstone notebook itself live in the project repository.</p>
+    <div class="repro-box">
+      <p style="margin:0 0 6px; color:#fff; font-weight:600;">Repository</p>
+      <p class="mono" style="margin:0 0 14px;">github.com/Rad108/Fly-rank-Intership- → <a href="#">work/notebooks/capstone.ipynb</a></p>
+      <p style="margin:0 0 6px; color:#fff; font-weight:600;">Submission pointer</p>
+      <p class="mono" style="margin:0;">submission/paper_url.txt → the live URL of this page</p>
+    </div>
+  </section>
+
+  <!-- ACK -->
+  <section class="block" style="border-bottom:none;">
+    <div class="sec-head"><span class="sec-num">09</span><h2>Acknowledgments &amp; data credit</h2></div>
+    <p>Built on the FlyRank ML Internship dataset — <a href="https://flyrank.ai" target="_blank" rel="noopener">flyrank.ai</a>. Thanks to the FlyRank engineering team for access to the search performance warehouse this work is built on.</p>
+  </section>
+
+</main>
+
+<footer>
+  Search Intelligence Capstone · Refresh‑prioritization by CTR &amp; position · Data via <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank</a>
+</footer>
+
+</body>
+</html>
